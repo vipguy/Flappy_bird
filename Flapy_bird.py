@@ -95,42 +95,32 @@ def is_off_screen(sprite):
 
 def get_random_pipes(xpos):
     pipes = []
-    min_pipe_top = PIPE_GAP + 50  # Minimum distance from top to bottom of screen
-    max_top_pipe_length = SCREEN_HEIGHT - min_pipe_top - PIPE_GAP - 50  # Maximum length of top pipe
+    min_pipe_top = PIPE_GAP + 50
+    max_top_pipe_length = SCREEN_HEIGHT - min_pipe_top - PIPE_GAP - 50
     gap_start = random.randint(min_pipe_top, min_pipe_top + max_top_pipe_length - PIPE_GAP)
+    pipe_color = random.choice(['green', 'red'])
     
-    top_pipe_height = gap_start
-    bottom_pipe_y = gap_start + PIPE_GAP
-    
-   ed'])
-    
-    pipes.append(Pipe(xpos, top_pipe_height, top_pipe_height, color=pipe_color, inverted=True))  # Top pipe
-    pipes.append(Pipe(xpos, bottom_pipe_y, SCREEN_HEIGHT - bottom_pipe_y, color=pipe_color))  # Bottom pipe
+    pipes.append(Pipe(xpos, gap_start, gap_start, color=pipe_color, inverted=True))
+    pipes.append(Pipe(xpos, gap_start + PIPE_GAP, SCREEN_HEIGHT - (gap_start + PIPE_GAP), color=pipe_color))
     
     return pipes
 
 def main():
-    # Initialize Pygame
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption('Flappy Bird')
 
-    .load('assets/sprites/background-night.png').convert()
+    BACKGROUND = pygame.image.load('assets/sprites/background-night.png').convert()
     BACKGROUND = pygame.transform.scale(BACKGROUND, (SCREEN_WIDTH, SCREEN_HEIGHT))
     BEGIN_IMAGE = pygame.image.load('assets/sprites/message.png').convert_alpha()
     BEGIN_IMAGE = pygame.transform.scale(BEGIN_IMAGE, (800, 600))  
     GAMEOVER_IMAGE = pygame.image.load('assets/sprites/gameover.png').convert_alpha()
     GAMEOVER_IMAGE = pygame.transform.scale(GAMEOVER_IMAGE, (800, 400))  
-   
-    pygame.mixer.music.load(wing_sound)
-    pygame.mixer.music.set_volume(0.5)
 
-    
     bird_group = pygame.sprite.GroupSingle(Bird())
     ground_group = pygame.sprite.Group()
     pipe_group = pygame.sprite.Group()
 
-    
     for i in range(2):
         ground = Ground(GROUND_WIDTH * i)
         ground_group.add(ground)
@@ -139,7 +129,6 @@ def main():
     begin = True
     game_over = False
     score = 0
-    pipe_frequency = 40
     frame_count = 0
     
     while begin:
@@ -150,23 +139,16 @@ def main():
                 return
             if event.type == pygame.KEYDOWN and (event.key == pygame.K_SPACE or event.key == pygame.K_UP):
                 bird_group.sprite.bump()
-                pygame.mixer.music.play()
+                pygame.mixer.Sound(wing_sound).play()
                 begin = False
 
         screen.blit(BACKGROUND, (0, 0))
-        screen.blit(BEGIN_IMAGE, (340, 660))  # 
-        
-        if is_off_screen(ground_group.sprites()[0]):
-            ground_group.remove(ground_group.sprites()[0])
-            ground = Ground(GROUND_WIDTH - 20)
-            ground_group.add(ground)
-        
+        screen.blit(BEGIN_IMAGE, (340, 660))  
         ground_group.update()
         bird_group.draw(screen)
         ground_group.draw(screen)
         pygame.display.update()
 
-    
     while not game_over:
         clock.tick(30)
         for event in pygame.event.get():
@@ -175,56 +157,16 @@ def main():
                 return
             if event.type == pygame.KEYDOWN and (event.key == pygame.K_SPACE or event.key == pygame.K_UP):
                 bird_group.sprite.bump()
-                pygame.mixer.music.play()
+                pygame.mixer.Sound(wing_sound).play()
 
         screen.blit(BACKGROUND, (0, 0))
-        
-        if is_off_screen(ground_group.sprites()[0]):
-            ground_group.remove(ground_group.sprites()[0])
-            ground = Ground(GROUND_WIDTH - 20)
-            ground_group.add(ground)
-
-        if frame_count % pipe_frequency == 0:
-            new_pipes = get_random_pipes(SCREEN_WIDTH * 2)
-            pipe_group.add(new_pipes)
-
-        for pipe in pipe_group.sprites():
-            if not hasattr(pipe, 'scored') and pipe.rect.right < bird_group.sprite.rect.left:
-                pipe.scored = True
-                score += 5
-
-        
-        if score >= 150:
-            bird_group.sprite.change_color('yellow')
-        elif score >= 100:
-            bird_group.sprite.change_color('red')
-
-        bird_group.update()
-        ground_group.update()
         pipe_group.update()
-
+        ground_group.update()
+        bird_group.update()
         bird_group.draw(screen)
         pipe_group.draw(screen)
         ground_group.draw(screen)
-
-        font_size = 50
-        flappy_font = pygame.font.Font('assets/font/Flappybird.ttf', font_size)
-        score_surface_flappy = flappy_font.render(f'Score: {score}', True, (255, 255, 255))
-        screen.blit(score_surface_flappy, (10, 10))
-
         pygame.display.update()
-
-        if (pygame.sprite.groupcollide(bird_group, ground_group, False, False, pygame.sprite.collide_mask) or
-            pygame.sprite.groupcollide(bird_group, pipe_group, False, False, pygame.sprite.collide_mask)):
-            pygame.mixer.music.load(hit_sound)
-            pygame.mixer.music.play()
-            screen.blit(GAMEOVER_IMAGE, (340, 660)) 
-            pygame.display.update()
-            time.sleep(2)
-            game_over = True
-            break
-
-        frame_count += 1
 
 if __name__ == "__main__":
     main()
